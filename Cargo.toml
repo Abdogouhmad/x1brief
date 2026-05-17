@@ -1,0 +1,15 @@
+[package]
+name = "X1Brief"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.102"
+arboard = { version = "3.6.1", features = ["wayland-data-control"] }
+candle-core = "0.10.2"
+candle-nn = "0.10.2"
+candle-transformers = "0.10.2"
+hf-hub = "0.5.0"
+notify-rust = "4.17.0"
+tokenizers = "0.23.1"
+tokio = { version = "1.52.3", features = ["full"] }
