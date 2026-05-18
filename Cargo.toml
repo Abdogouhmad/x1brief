@@ -1,6 +1,6 @@
 [package]
 name = "X1Brief"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 
 [dependencies]
@@ -10,7 +10,12 @@ candle-core = "0.10.2"
 candle-nn = "0.10.2"
 candle-transformers = "0.10.2"
 clap = { version = "4.6.1", features = ["derive"] }
+config = "0.15.23"
+dirs = "6.0.0"
 hf-hub = "0.5.0"
 notify-rust = "4.17.0"
+serde = "1.0.228"
+thiserror = "2.0.18"
 tokenizers = "0.23.1"
 tokio = { version = "1.52.3", features = ["full"] }
+toml = "1.1.2"
