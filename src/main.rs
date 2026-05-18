@@ -1,5 +1,11 @@
 #![allow(clippy::collapsible_if)]
 mod summarizer;
+mod ai;
+mod cli;
+mod notifier;
+mod selectore;
+mod textprocess;
+
 
 use anyhow::Result;
 use arboard::Clipboard;

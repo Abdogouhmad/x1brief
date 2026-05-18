@@ -1,0 +1,64 @@
+name: 🐛 Bug Report
+description: Report a bug, crash, or unexpected behavior in X1Brief
+title: "[BUG]: <short description>"
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 🐛 Help us squash this bug!
+        Please fill out this form with as much detail as possible so we can reproduce and fix the issue.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "🚨 Describe the Bug"
+      description: A clear and concise description of what the bug is.
+      placeholder: "Example: The app panics and crashes whenever I copy text directly from a terminal window running inside Wayland..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: "🔄 Steps to Reproduce"
+      description: What steps do we need to take to see the bug happen?
+      placeholder: |
+        1. Start X1Brief with `cargo run`
+        2. Open terminal/browser window
+        3. Highlight and copy text over 300 characters
+        4. See error output...
+    validations:
+      required: true
+
+  - type: textarea
+    id: behavior
+    attributes:
+      label: "📉 Expected vs. Actual Behavior"
+      description: What did you expect to happen, and what actually happened?
+      placeholder: "Expected: A desktop notification showing the text summary.\nActual: The CLI printed an 'arboard' bridge error and halted."
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: "📋 Terminal Output / Logs / Stack Traces"
+      description: Paste any error messages, Rust panics, or log lines printed in your terminal here.
+      render: shell
+      placeholder: "thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value...'"
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: "💻 Environment Details"
+      description: Please provide details about your operating system and configuration.
+      value: |
+        - OS: [e.g. Ubuntu 24.04, Arch Linux, macOS]
+        - Display Server (Linux only): [e.g. Wayland, X11]
+        - Desktop Environment / WM: [e.g. GNOME, KDE, Sway, i3]
+        - Model Used: [e.g. Gemma 3 1B Q4_K_M, or AI disabled]
+    validations:
+      required: true

@@ -1,0 +1,45 @@
+name: ✨ Feature Request
+description: Suggest a new feature or improvement for X1Brief
+title: "[FEATURE]: <short description>"
+labels: ["feature", "enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### ✨ Thanks for helping improve X1Brief!
+        Before submitting, please ensure this feature hasn't already been requested in our open issues.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "🛑 The Problem / Pain Point"
+      description: Is this request related to a limitation in how X1Brief currently captures, processes, or alerts you about text?
+      placeholder: "Example: Currently, when I copy markdown files, the 300-character count triggers on raw URLs, which floods my desktop notifications with useless summaries..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: "💡 The Ideal Solution"
+      description: What specific behavior or configuration option would you like to see added to X1Brief?
+      placeholder: "Example: Add a regex filter or config file parameter (`ignore_urls = true`) so the clipboard listener strips or ignores link-heavy text before invoking Gemma 3."
+    validations:
+      required: true
+
+  - type: textarea
+    id: workflow
+    attributes:
+      label: "🔄 Expected User Workflow"
+      description: Walk us through how you see this working in real-time while you work.
+      placeholder: "Example: 1. I copy text. 2. X1Brief checks the content. 3. If it contains X, it does Y instead of a standard notification."
+    validations:
+      required: false
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: "📌 Additional Context / Environment Details"
+      description: Mention your OS/Window Manager (e.g., Wayland, X11, GNOME, KDE) if it relates to clipboard/notification behavior, or add screenshots/mockups.
+    validations:
+      required: false
