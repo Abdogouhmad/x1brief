@@ -1,6 +1,8 @@
 [package]
 name = "X1Brief"
 version = "0.2.0"
+description = "Rust Based CLI that summarizes text using free AI model"
+authors = ["Abdogouhmad"]
 edition = "2024"
 
 [dependencies]
@@ -14,6 +16,7 @@ config = "0.15.23"
 dirs = "6.0.0"
 hf-hub = "0.5.0"
 notify-rust = "4.17.0"
+regex = "1.12.3"
 serde = "1.0.228"
 thiserror = "2.0.18"
 tokenizers = "0.23.1"

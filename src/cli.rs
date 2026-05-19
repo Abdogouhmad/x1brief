@@ -1,104 +1,177 @@
-use std::{thread::sleep, time::Duration};
+use std::sync::Arc;
 
 use clap::Parser;
-// use tokio::sync::watch;
+use tokio::{
+    sync::Mutex,
+    time::{sleep, Duration},
+};
 
+use crate::{ai::X1Ai, regex::X1BriefRegex};
 use crate::clipboard::X1BriefClipboard;
 use crate::notifier::X1BriefNotifier;
 use crate::toml_setup::X1BriefConfig;
 
 /// X1Brief rust based cli that summarizes text using free AI model
 #[derive(Parser)]
+#[command(
+    name = env!("CARGO_PKG_NAME"),
+    version = env!("CARGO_PKG_VERSION"),
+    about = env!("CARGO_PKG_DESCRIPTION"),
+)]
 pub struct X1Brief {
+    /// Summarize the given text
     #[arg(short = 's', long = "sum", num_args = 0..=1)]
     pub sum: Option<String>,
+
+    /// Enable debug mode for development
     #[arg(short = 'd', long = "debug")]
     pub debug: bool,
+
+    /// Watch mode for continuous summarization
     #[arg(short = 'w', long = "watch")]
     pub watch: bool,
 }
 
-/// ENUM for Error types
+/// CLI errors
 #[derive(thiserror::Error, Debug)]
 pub enum X1briefErrors {
-    // unknown argument
-    #[error("unknown argument")]
+    #[error("watch and debug modes cannot run together")]
     ArgsNotFound,
-    // Missing required argument
-    // #[error("required argument not found")]
-    // RequiredArgNotFound,
-    // empty value
+
     #[error("Not taking an empty value")]
     EmptyValue,
 }
 
-
 impl X1Brief {
-
-    /// Parses the CLI arguments
+    /// Parse CLI args
     pub fn new() -> Self {
         Self::parse()
     }
 
-    /// Runs the CLI application
-    pub fn run(&self) -> anyhow::Result<()> {
+    /// Run application
+    pub async fn run(&self) -> anyhow::Result<()> {
         self.run_checks()?;
-        if self.watch {
-            println!("Watch mode is running...");
-            self.watch_mode()?;
-        };
+
         if self.debug {
-            let toml = X1BriefConfig::load()?;
-            println!("Config path: {}", toml.config_path.display());
-            println!("Model path: {}", toml.model_path());
-            println!("Tokenizer path: {}", toml.tokenizer_path());
-        };
+            let checker = X1BriefRegex::new()?;
+
+            println!("{}", checker.is_password("hello")); // false
+            println!("{}", checker.is_password("Hello123!")); // true
+        }
 
         if let Some(s) = &self.sum {
-            println!("Sum: {}", s);
+            println!("Input: {}", s);
         }
+
+        if self.watch {
+            println!("Watch mode is running...");
+            self.watch_mode().await?;
+        }
+
         Ok(())
     }
 
-    /// Runs checks on the parsed arguments
+    /// Validate arguments
     fn run_checks(&self) -> anyhow::Result<()> {
         if self.watch && self.debug {
             return Err(X1briefErrors::ArgsNotFound.into());
         }
 
-        match &self.sum {
-            Some(s) => {
-                if s.trim().is_empty() {
-                    return Err(X1briefErrors::EmptyValue.into());
-                }
-            }
-            None => {
-                // return Err(X1briefErrors::EmptyValue.into());
+        if let Some(s) = &self.sum {
+            if s.trim().is_empty() {
+                return Err(X1briefErrors::EmptyValue.into());
             }
         }
 
         Ok(())
     }
 
-    /// Runs the watch mode, monitoring the clipboard for changes & summarizing the contents
-    fn watch_mode(&self) -> anyhow::Result<()> {
+    /// Watch clipboard and summarize changes
+    async fn watch_mode(&self) -> anyhow::Result<()> {
+
         let mut clipboard = X1BriefClipboard::new()?;
         let mut last_text = clipboard.get_text()?;
+
         let notifier = X1BriefNotifier::new();
+        let toml = X1BriefConfig::load()?;
+        let regex = X1BriefRegex::new()?;
 
-        notifier.notify("X1Brief", "The app is launching in watch mode");
+        // 🔥 Lazy AI (GPU not initialized yet)
+        let mut ai: Option<Arc<Mutex<X1Ai>>> = None;
 
-        while self.watch {
-            sleep(Duration::from_millis(500));
+        notifier.notify("X1Brief", "Watch mode started");
 
-            let current_text = clipboard.get_text()?;
+        loop {
+            sleep(Duration::from_millis(500)).await;
 
-            if current_text != last_text {
-                println!("Clipboard changed: {}", current_text);
-                println!("Clipboard changed: {}", current_text.len());
-                // TODO: call AI summarizer here
-                last_text = current_text;
+            // 1. clipboard change
+            let current_text = match clipboard.get_text() {
+                Ok(t) => t,
+                Err(_) => continue,
+            };
+
+            if current_text == last_text {
+                continue;
             }
+
+            last_text = current_text.clone();
+
+            let text = current_text.trim();
+
+            // 2. cheap filters (VERY fast path)
+            if text.is_empty() {
+                continue;
+            }
+
+            if text.len() <= 10 || text.len() > 5000 {
+                continue;
+            }
+
+            if text.chars().all(|c| c.is_whitespace()) {
+                continue;
+            }
+
+            // password detection (cheap regex)
+            if regex.is_password(text) {
+                eprintln!("🔒 Password detected → exiting watch mode");
+                break;
+            }
+
+            // 3. decide: process or skip (final gate)
+            let should_process = true;
+
+            if !should_process {
+                continue;
+            }
+
+            println!("Clipboard changed ({} chars)", text.len());
+
+            // 4. ONLY THEN load AI (lazy GPU init)
+            if ai.is_none() {
+                ai = Some(Arc::new(Mutex::new(
+                    X1Ai::new(
+                        toml.model_path(),
+                        toml.tokenizer_path(),
+                    )?
+                )));
+            }
+
+            let ai = ai.as_ref().unwrap().clone();
+            let text = text.to_string();
+
+            // 5. spawn blocking inference (GPU work)
+            let summary = tokio::task::spawn_blocking(move || {
+                let mut ai = ai.blocking_lock();
+                ai.ai_sumup(&text)
+            })
+            .await??;
+
+            println!("\nSummary:\n{}\n", summary);
+
+            notifier.notify(
+                "X1Brief Summary",
+                "Your summary is ready",
+            );
         }
 
         Ok(())

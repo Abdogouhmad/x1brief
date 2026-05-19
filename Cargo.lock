@@ -16,6 +16,7 @@ dependencies = [
  "dirs",
  "hf-hub",
  "notify-rust",
+ "regex",
  "serde",
  "thiserror 2.0.18",
  "tokenizers 0.23.1",

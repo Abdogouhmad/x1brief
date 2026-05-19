@@ -11,11 +11,6 @@ impl X1BriefClipboard {
         })
     }
 
-    // fn set_text(&mut self, text: &str) -> anyhow::Result<()> {
-    //     self.clipboard.set_text(text)?;
-    //     Ok(())
-    // }
-
     pub fn get_text(&mut self) -> anyhow::Result<String> {
         Ok(self.clipboard.get_text()?)
     }
