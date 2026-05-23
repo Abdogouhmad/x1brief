@@ -3,7 +3,7 @@ mod ai;
 mod cli;
 mod clipboard;
 mod notifier;
-mod toml_setup;
+// mod toml_setup;
 mod regex;
 
 use crate::cli::X1Brief;
