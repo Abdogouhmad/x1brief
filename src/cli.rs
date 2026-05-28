@@ -10,7 +10,7 @@ use crate::{
     ai::{ModelFamily, ModelSize, X1Ai},
     clipboard::X1BriefClipboard,
     notifier::X1BriefNotifier,
-    regex::X1BriefRegex,
+    regex::X1BriefRegex, toml_setup::X1BriefConfig,
 };
 
 /// X1Brief rust based cli that summarizes text using free AI model
@@ -35,11 +35,11 @@ pub struct X1Brief {
 
     /// AI model family
     #[arg(long, value_enum, default_value = "gemma")]
-    pub model: ModelFamily,
+    pub prompted_model: ModelFamily,
 
     /// AI model size
     #[arg(long, value_enum, default_value = "small")]
-    pub size: ModelSize,
+    pub prompted_size_model: ModelSize,
 }
 
 /// CLI errors
@@ -65,21 +65,31 @@ impl X1Brief {
         // ---------------- DEBUG ----------------
 
         if self.debug {
-            let checker = X1BriefRegex::new()?;
+            let toml_conf = X1BriefConfig::load()?;
+            let def_model = toml_conf.model();
+            let def_size = toml_conf.size_model();
 
-            println!("Password Tests:");
-            println!("hello => {}", checker.is_password("hello"));
-            println!("Hello123! => {}", checker.is_password("Hello123!"));
+            println!("You are calling {:?} at size of {:?}", def_model, def_size);
+            // let checker = X1BriefRegex::new()?;
+
+            // println!("Password Tests:");
+            // println!("hello => {}", checker.is_password("hello"));
+            // println!("Hello123! => {}", checker.is_password("Hello123!"));
         }
 
         // ---------------- DIRECT SUMMARIZE ----------------
 
         if let Some(text) = &self.sum {
-            let mut ai = X1Ai::new(self.model, self.size)?;
+            let mut ai = X1Ai::new(self.prompted_model, self.prompted_size_model)?;
 
             println!("Generating summary...\n");
 
-            let summary = ai.generate(text)?;
+            let prompt = format!(
+                "You are an AI assistant that summarizes text: {}",
+                text
+            );
+
+            let summary = ai.generate(&prompt)?;
 
             println!("================ SUMMARY ================\n");
             println!("{summary}\n");
@@ -169,19 +179,23 @@ impl X1Brief {
             // ---------------- LAZY AI LOAD ----------------
 
             if ai.is_none() {
-                println!("Loading AI model: {:?} {:?}", self.model, self.size);
+                println!("Loading AI model: {:?} {:?}", self.prompted_model, self.prompted_size_model);
 
-                ai = Some(Arc::new(Mutex::new(X1Ai::new(self.model, self.size)?)));
+                ai = Some(Arc::new(Mutex::new(X1Ai::new(self.prompted_model, self.prompted_size_model)?)));
             }
 
             let ai = ai.as_ref().unwrap().clone();
             let text = text.to_string();
+            let prompt = format!(
+                "You are an AI assistant that summarizes text: {}",
+                text
+            );
 
             // ---------------- INFERENCE ----------------
 
             let summary = tokio::task::spawn_blocking(move || {
                 let mut ai = ai.blocking_lock();
-                ai.generate(&text)
+                ai.generate(&prompt)
             })
             .await??;
 

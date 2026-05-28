@@ -3,15 +3,16 @@ use candle_pipelines::text_generation::{
     Gemma3, Llama3_2, Qwen3, TextGenerationPipeline, TextGenerationPipelineBuilder,
 };
 use clap::ValueEnum;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, ValueEnum)]
+#[derive(Deserialize, Serialize, Clone, Copy, Debug, ValueEnum)]
 pub enum ModelFamily {
     Gemma,
     Qwen,
     Llama,
 }
 
-#[derive(Clone, Copy, Debug, ValueEnum)]
+#[derive(Deserialize, Serialize, Clone, Copy, Debug, ValueEnum)]
 pub enum ModelSize {
     Small,
     Large,

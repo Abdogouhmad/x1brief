@@ -5,11 +5,13 @@ use config::Config;
 use dirs;
 use thiserror::Error;
 
+use crate::ai::{ModelFamily, ModelSize};
+
 
 /// =========================
 /// Top-level config wrapper
 /// =========================
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Deserialize,Serialize, Debug, Clone)]
 pub struct X1BriefConfig {
     pub config_path: PathBuf,
     pub model: ModelConfig,
@@ -18,21 +20,20 @@ pub struct X1BriefConfig {
 /// =========================
 /// [model] section in TOML
 /// =========================
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ModelConfig {
-    pub model_path: String,
-    pub tokenizer_path: String,
+    pub model: ModelFamily,
+    pub size_model: ModelSize,
 }
 
 
 impl Default for ModelConfig {
     fn default() -> Self {
-        let config_dir = dirs::config_dir().unwrap_or_default();
-        let model_path = config_dir.join("x1brief").join("models").join("modelname.gguf");
-        let tokenizer_path = config_dir.join("x1brief").join("models").join("tokenizer.json");
+        let model = ModelFamily::Gemma;
+        let size_model = ModelSize::Small;
         Self {
-            model_path: model_path.to_string_lossy().into_owned(),
-            tokenizer_path: tokenizer_path.to_string_lossy().into_owned(),
+            model: model,
+            size_model: size_model,
         }
     }
 }
@@ -100,11 +101,12 @@ impl X1BriefConfig {
     }
 
     /// helper getters
-    pub fn model_path(&self) -> &str {
-        &self.model.model_path
+    pub fn model(&self) -> &ModelFamily {
+        &self.model.model
     }
 
-    pub fn tokenizer_path(&self) -> &str {
-        &self.model.tokenizer_path
+    pub fn size_model(&self) -> &ModelSize {
+        &self.model.size_model
     }
+
 }
