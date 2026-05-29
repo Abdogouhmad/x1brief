@@ -1,13 +1,13 @@
 use regex::Regex;
 
-pub struct X1BriefRegex {
+pub struct X1TextProcess {
     lowercase: Regex,
     uppercase: Regex,
     digit: Regex,
     special: Regex,
 }
 
-impl X1BriefRegex {
+impl X1TextProcess {
     pub fn new() -> anyhow::Result<Self> {
         Ok(Self {
             lowercase: Regex::new(r"[a-z]")?,
@@ -17,15 +17,26 @@ impl X1BriefRegex {
         })
     }
 
+    pub fn sanitize(&self, text: &str) -> String {
+        text.trim()
+            .replace('\n', "")
+            .replace('\t', "")
+            .replace('\r', "")
+    }
+
+    pub fn is_valid_text(&self, text: &str, max_len: usize) -> bool {
+        !text.is_empty()
+            && !text.chars().all(|c| c.is_whitespace())
+            && text.len() >= 10
+            && text.len() <= max_len
+    }
 
     pub fn is_password(&self, text: &str) -> bool {
-        // Reject obvious normal sentences
         if text.contains(' ') || text.contains('\n') {
             return false;
         }
 
-        // Passwords are usually not gigantic
-        if text.len() < 8 || text.len() > 128 {
+        if !(8..=128).contains(&text.len()) {
             return false;
         }
 
@@ -47,7 +58,6 @@ impl X1BriefRegex {
             score += 1;
         }
 
-        // Require strong mix
         score >= 3
     }
 }
